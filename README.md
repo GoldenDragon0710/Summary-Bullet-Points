@@ -2,7 +2,7 @@
 
 Summary Bullet Points is a tool for creating infographics.
 
-- Load multiple PDF files
+- Load multiple PDF files(essays)
 - Parse PDF to extract title and abstract, edit titles and download as Word document.
 - Generate 8~10 bullet points from the abstract using ChatGPT
 - Create/edit new prompt for AI image generation using ChatGPT

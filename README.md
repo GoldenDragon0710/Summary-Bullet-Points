@@ -8,7 +8,7 @@ Summary Bullet Points is a tool for creating infographics.
 - Create/edit new prompt for AI image generation using ChatGPT
 - Generate and download AI images.
 
-### Frontend
+### Frontend (Material Tailwind CSS)
 
 ```sh
 npm install
@@ -22,6 +22,12 @@ py -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 flask run --debug --port=5000 --host=0.0.0.0
+```
+
+- Create `.env` file
+
+```sh
+OPENAI_API_KEY = XXXXXXXXXXXX
 ```
 
 ## PDF Parsing and extracting the text using `PyPDF2` (v3.0)

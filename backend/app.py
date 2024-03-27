@@ -2,14 +2,15 @@ from flask import Flask, request
 from flask_cors import CORS, cross_origin
 import PyPDF2
 import os
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 import requests
 import datetime
 import pdfplumber
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
+OpenAI.api_key = OPENAI_API_KEY
+client = OpenAI()
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -53,16 +54,17 @@ def get_response():
   start_index = virtual_text2.find("abstract")
   end_index = virtual_text2.find(".\n", start_index) + 2
   substring = abstract_text[start_index:end_index]
-  prompt = "List only 8-10 clear and simple summary bullet points to create an infographic from prompt in numerical order.These bullet points will be used for propmts generating AI images. prompt:" + substring
   
-  response_text = openai.Completion.create(                                                      
-    prompt=prompt,
-    model="text-davinci-003",
-    max_tokens=1024,
+  response_text = client.chat.completions.create(                                                      
+    model="gpt-3.5-turbo",
     temperature=0.2,
+    messages=[
+      {"role": "system", "content": "List only 8-10 clear and simple summary bullet points to create an infographic from prompt in numerical order.These bullet points will be used for propmts generating AI images."},
+      {"role": "user", "content": substring}
+    ]
   )
   bullet_pattern = r'\n\d+\.'
-  bullet_points = [item.strip() for item in response_text.choices[0].text.split(bullet_pattern) if item.strip()]
+  bullet_points = [item.strip() for item in response_text.choices[0].message.content.split(bullet_pattern) if item.strip()]
   summary = bullet_points[0]
   prompt_list = summary.split("\n")  
   return {"prompt_list": prompt_list, "title": max_font_text}
@@ -71,25 +73,28 @@ def get_response():
 @cross_origin()
 def get_initialPrompt():
   bullet = request.json['bullet']
-  response = openai.Completion.create(                                                      
-    prompt="Create an prompt to generate an AI image for infographics from the text:" + bullet,
-    model="text-davinci-003",
-    max_tokens=1024,
+  response = client.chat.completions.create(                                                      
+    model="gpt-3.5-turbo",
     temperature=0.2,
-  );
-  return response.choices[0].text
+    messages=[
+      {"role": "system", "content": "Create an prompt to generate an AI image for infographics from the text"},
+      {"role": "user", "content": bullet}
+    ]
+  )
+  return response.choices[0].message.content
 
 @app.route("/image", methods=['POST'])
 @cross_origin()
 def get_imageGeneration():
   prompt = request.json["prompt"]
-  response = openai.Image.create(
-    prompt=prompt,
-    n=1,
-    size="1024x1024",
-    response_format="url"
-  );
-  ImgURL = response['data'][0]['url']
+  response = client.images.generate(
+        model="dall-e-3",
+        prompt=prompt,
+        n=1,
+        size="1024x1024",
+        quality="standard",
+      )
+  ImgURL = response.data[0].url
   return ImgURL
 
 @app.route("/download", methods=['POST'])
